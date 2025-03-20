@@ -1,5 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import 'dayjs/locale/fr';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -24,20 +27,22 @@ const theme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <Router>
-        <div className="App">
-          <Navigation />
-          <main>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/experiences" element={<ExperienceList />} />
-              <Route path="/experiences/:id" element={<ExperienceDetail />} />
-              <Route path="/booking/:id" element={<Booking />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </Router>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+        <Router>
+          <div className="App">
+            <Navigation />
+            <main>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/experiences" element={<ExperienceList />} />
+                <Route path="/experiences/:id" element={<ExperienceDetail />} />
+                <Route path="/booking/:id" element={<Booking />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </Router>
+      </LocalizationProvider>
     </ThemeProvider>
   );
 }

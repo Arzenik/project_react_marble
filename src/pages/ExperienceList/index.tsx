@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Container, Grid, Typography, Box, CircularProgress, TextField, MenuItem, Select, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+import { Container, Grid, Typography, Box, CircularProgress, TextField, MenuItem, Select, FormControl, InputLabel, SelectChangeEvent, Pagination } from '@mui/material';
 import ExperienceCard from '../../components/ExperienceCard';
-import { experienceApi, Experience } from '../../api/experienceApi';
+import { experienceApi, Experience, PaginatedResponse } from '../../api/experienceApi';
 
 const ExperienceList = () => {
     const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -9,14 +9,18 @@ const ExperienceList = () => {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const ITEMS_PER_PAGE = 9;
 
     useEffect(() => {
         const controller = new AbortController();
 
         const fetchExperiences = async () => {
             try {
-                const data = await experienceApi.getAllExperiences();
-                setExperiences(data);
+                const data = await experienceApi.getAllExperiences(page, ITEMS_PER_PAGE);
+                setExperiences(data.results);
+                setTotalPages(data.totalPages);
                 setLoading(false);
             } catch (err) {
                 if (err instanceof Error && err.name === 'AbortError') {
@@ -32,7 +36,7 @@ const ExperienceList = () => {
         return () => {
             controller.abort();
         };
-    }, []);
+    }, [page]);
 
     const categories = useMemo(() => {
         const uniqueCategories = new Set(experiences.map(exp => exp.category));
@@ -50,10 +54,16 @@ const ExperienceList = () => {
 
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
+        setPage(1); // Réinitialiser la page lors d'une recherche
     }, []);
 
     const handleCategoryChange = useCallback((e: SelectChangeEvent) => {
         setSelectedCategory(e.target.value);
+        setPage(1); // Réinitialiser la page lors d'un changement de catégorie
+    }, []);
+
+    const handlePageChange = useCallback((_event: React.ChangeEvent<unknown>, value: number) => {
+        setPage(value);
     }, []);
 
     if (loading) {
@@ -119,6 +129,18 @@ const ExperienceList = () => {
                 <Typography variant="h6" align="center" sx={{ mt: 4 }}>
                     Aucune expérience ne correspond à votre recherche
                 </Typography>
+            )}
+
+            {totalPages > 1 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                    <Pagination
+                        count={totalPages}
+                        page={page}
+                        onChange={handlePageChange}
+                        color="primary"
+                        size="large"
+                    />
+                </Box>
             )}
         </Container>
     );

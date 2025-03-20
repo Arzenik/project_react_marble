@@ -1,5 +1,6 @@
 import { Container, Typography, Button, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import BestExperiences from '../../components/BestExperiences';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -50,6 +51,7 @@ const Home = () => {
                         Réservez en toute simplicité et profitez de moments exceptionnels.
                     </Typography>
                 </Box>
+                <BestExperiences />
             </Container>
         </Box>
     );
