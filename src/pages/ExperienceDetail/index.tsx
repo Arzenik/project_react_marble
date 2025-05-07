@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     Container,
     Typography,
@@ -10,27 +10,42 @@ import {
     Rating,
     Divider,
     Grid,
+    Chip,
+    Card,
+    CardMedia,
+    CardContent,
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import EuroIcon from '@mui/icons-material/Euro';
 import { experienceApi, Experience } from '../../api/experienceApi';
 import BookingModal from '../../components/BookingModal';
 
 const ExperienceDetail = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [experience, setExperience] = useState<Experience | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [similarExperiences, setSimilarExperiences] = useState<Experience[]>([]);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchExperience = async () => {
+            if (!id) return;
+            
             try {
-                if (!id) throw new Error('ID non spécifié');
+                setLoading(true);
                 const data = await experienceApi.getExperienceById(id);
                 setExperience(data);
-                setLoading(false);
+                
+                // Charger les expériences similaires
+                const similar = await experienceApi.getSimilarExperiences(id, 3);
+                setSimilarExperiences(similar);
             } catch (err) {
-                setError("Une erreur est survenue lors du chargement de l'expérience.");
+                console.error('Erreur lors du chargement de l\'expérience:', err);
+                setError('Impossible de charger les détails de cette expérience.');
+            } finally {
                 setLoading(false);
             }
         };
@@ -57,9 +72,14 @@ const ExperienceDetail = () => {
     if (error || !experience) {
         return (
             <Container maxWidth="lg" sx={{ py: 8 }}>
-                <Typography color="error" align="center">
-                    {error || 'Expérience non trouvée'}
+                <Typography color="error" align="center" variant="h5">
+                    {error || "Expérience non trouvée"}
                 </Typography>
+                <Box sx={{ textAlign: 'center', mt: 4 }}>
+                    <Button variant="contained" onClick={() => navigate('/experiences')}>
+                        Retour aux expériences
+                    </Button>
+                </Box>
             </Container>
         );
     }
@@ -67,83 +87,148 @@ const ExperienceDetail = () => {
     return (
         <>
             <Container maxWidth="lg" sx={{ py: 8 }}>
-                <Box sx={{ position: 'relative', mb: 6 }}>
-                    <Box
-                        component="img"
-                        src={experience.image}
-                        alt={experience.title}
-                        sx={{
-                            width: '100%',
-                            height: '400px',
-                            objectFit: 'cover',
-                            borderRadius: 2,
-                        }}
-                    />
-                </Box>
-
                 <Grid container spacing={4}>
-                    <Grid item xs={12} md={8}>
-                        <Typography variant="h3" component="h1" gutterBottom>
+                    <Grid item xs={12} md={7}>
+                        <Box
+                            component="img"
+                            src={experience.image}
+                            alt={experience.title}
+                            sx={{
+                                width: '100%',
+                                height: 400,
+                                objectFit: 'cover',
+                                borderRadius: 2,
+                                boxShadow: 3,
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={5}>
+                        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
                             {experience.title}
                         </Typography>
-
+                        
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <LocationOnIcon sx={{ color: 'text.secondary', mr: 1 }} />
-                            <Typography variant="h6" color="text.secondary">
-                                {experience.location}
-                            </Typography>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                             <Rating value={experience.rating} precision={0.5} readOnly />
                             <Typography variant="body1" sx={{ ml: 1 }}>
-                                {experience.rating} / 5
+                                {experience.rating.toFixed(1)} ({experience?.reviews?.length || 0} avis)
                             </Typography>
                         </Box>
-
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <LocationOnIcon color="action" sx={{ mr: 1 }} />
+                            <Typography variant="body1">{experience.location}</Typography>
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <EuroIcon color="action" sx={{ mr: 1 }} />
+                            <Typography variant="h5" color="primary" sx={{ fontWeight: 600 }}>
+                                {experience.price} € par personne
+                            </Typography>
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                            <CalendarTodayIcon color="action" sx={{ mr: 1 }} />
+                            <Typography variant="body1">
+                                {experience?.availableDates?.length || 0} dates disponibles
+                            </Typography>
+                        </Box>
+                        
+                        <Chip 
+                            label={experience.category} 
+                            color="primary" 
+                            sx={{ mb: 3, fontWeight: 500 }} 
+                        />
+                        
+                        <Button
+                            component={Link}
+                            to={`/booking/${experience.id}`}
+                            variant="contained"
+                            size="large"
+                            fullWidth
+                            sx={{ 
+                                py: 1.5, 
+                                fontWeight: 600,
+                                borderRadius: 2
+                            }}
+                        >
+                            Réserver maintenant
+                        </Button>
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                        <Divider sx={{ my: 4 }} />
+                        <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
+                            Description
+                        </Typography>
                         <Typography variant="body1" paragraph>
                             {experience.description}
                         </Typography>
-
+                    </Grid>
+                    
+                    <Grid item xs={12}>
                         <Divider sx={{ my: 4 }} />
-
-                        {experience.reviews && experience.reviews.length > 0 && (
-                            <Box>
-                                <Typography variant="h5" gutterBottom>
-                                    Avis des participants
+                        <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
+                            Avis des voyageurs
+                        </Typography>
+                        
+                        {experience?.reviews?.map((review, index) => (
+                            <Paper key={index} elevation={1} sx={{ p: 3, mb: 2, borderRadius: 2 }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                    {review.user}
                                 </Typography>
-                                {experience.reviews.map((review, index) => (
-                                    <Paper key={index} sx={{ p: 2, mb: 2 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                            <Typography variant="subtitle1">{review.user}</Typography>
-                                            <Rating value={review.rating} size="small" readOnly />
-                                        </Box>
-                                        <Typography variant="body2">{review.comment}</Typography>
-                                    </Paper>
+                                <Rating value={review.rating} precision={0.5} readOnly size="small" sx={{ my: 1 }} />
+                                <Typography variant="body1">
+                                    {review.comment}
+                                </Typography>
+                            </Paper>
+                        ))}
+                    </Grid>
+                    
+                    {similarExperiences.length > 0 && (
+                        <Grid item xs={12}>
+                            <Divider sx={{ my: 4 }} />
+                            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
+                                Expériences similaires
+                            </Typography>
+                            <Grid container spacing={3}>
+                                {similarExperiences.map(similar => (
+                                    <Grid item xs={12} sm={6} md={4} key={similar.id}>
+                                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
+                                            <CardMedia
+                                                component="img"
+                                                height={160}
+                                                image={similar.image}
+                                                alt={similar.title}
+                                            />
+                                            <CardContent>
+                                                <Typography variant="h6" component="h3" gutterBottom>
+                                                    {similar.title}
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                    <Rating value={similar.rating} precision={0.5} readOnly size="small" />
+                                                    <Typography variant="body2" sx={{ ml: 1 }}>
+                                                        {similar.rating.toFixed(1)}
+                                                    </Typography>
+                                                </Box>
+                                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                                    {similar.location}
+                                                </Typography>
+                                                <Button
+                                                    component={Link}
+                                                    to={`/experience/${similar.id}`}
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    sx={{ mt: 2 }}
+                                                >
+                                                    Voir les détails
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
                                 ))}
-                            </Box>
-                        )}
-                    </Grid>
-
-                    <Grid item xs={12} md={4}>
-                        <Paper sx={{ p: 3, position: 'sticky', top: 20 }}>
-                            <Typography variant="h4" gutterBottom>
-                                {experience.price}€
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" paragraph>
-                                par personne
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                fullWidth
-                                size="large"
-                                onClick={handleOpenBookingModal}
-                            >
-                                Réserver maintenant
-                            </Button>
-                        </Paper>
-                    </Grid>
+                            </Grid>
+                        </Grid>
+                    )}
                 </Grid>
             </Container>
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -9,6 +10,8 @@ import Home from './pages/Home';
 import ExperienceList from './pages/ExperienceList';
 import ExperienceDetail from './pages/ExperienceDetail';
 import Booking from './pages/Booking';
+import Header from './components/Header';
+import { Box } from '@mui/material';
 
 const theme = createTheme({
   palette: {
@@ -29,18 +32,18 @@ function App() {
     <ThemeProvider theme={theme}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
         <Router>
-          <div className="App">
-            <Navigation />
-            <main>
+          <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Header />
+            <Box component="main" sx={{ flexGrow: 1 }}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/experiences" element={<ExperienceList />} />
-                <Route path="/experiences/:id" element={<ExperienceDetail />} />
-                <Route path="/booking/:id" element={<Booking />} />
+                <Route path="/experience/:id" element={<ExperienceDetail />} />
+                <Route path="/booking/:experienceId" element={<Booking />} />
               </Routes>
-            </main>
+            </Box>
             <Footer />
-          </div>
+          </Box>
         </Router>
       </LocalizationProvider>
     </ThemeProvider>

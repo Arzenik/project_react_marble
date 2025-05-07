@@ -468,10 +468,17 @@ export const experienceApi = {
         await new Promise(resolve => setTimeout(resolve, 300));
         
         const experience = MOCK_EXPERIENCES.find(exp => exp.id === id);
+        
         if (!experience) {
-            throw new Error(`Expérience avec l'ID ${id} non trouvée`);
+            throw new Error(`Experience with id ${id} not found`);
         }
-        return experience;
+        
+        // S'assurer que toutes les propriétés requises sont présentes
+        return {
+            ...experience,
+            reviews: experience.reviews || [],
+            availableDates: experience.availableDates || []
+        };
     },
 
     createBooking: async (booking: BookingRequest) => {
