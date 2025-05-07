@@ -20,6 +20,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import EuroIcon from '@mui/icons-material/Euro';
 import { experienceApi, Experience } from '../../api/experienceApi';
 import BookingModal from '../../components/BookingModal';
+import SimilarExperienceCard from '../../components/SimilarExperienceCard';
 
 const ExperienceDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -192,37 +193,7 @@ const ExperienceDetail = () => {
                             <Grid container spacing={3}>
                                 {similarExperiences.map(similar => (
                                     <Grid item xs={12} sm={6} md={4} key={similar.id}>
-                                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
-                                            <CardMedia
-                                                component="img"
-                                                height={160}
-                                                image={similar.image}
-                                                alt={similar.title}
-                                            />
-                                            <CardContent>
-                                                <Typography variant="h6" component="h3" gutterBottom>
-                                                    {similar.title}
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                    <Rating value={similar.rating} precision={0.5} readOnly size="small" />
-                                                    <Typography variant="body2" sx={{ ml: 1 }}>
-                                                        {similar.rating.toFixed(1)}
-                                                    </Typography>
-                                                </Box>
-                                                <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                    {similar.location}
-                                                </Typography>
-                                                <Button
-                                                    component={Link}
-                                                    to={`/experience/${similar.id}`}
-                                                    variant="outlined"
-                                                    fullWidth
-                                                    sx={{ mt: 2 }}
-                                                >
-                                                    Voir les détails
-                                                </Button>
-                                            </CardContent>
-                                        </Card>
+                                        <SimilarExperienceCard experience={similar} />
                                     </Grid>
                                 ))}
                             </Grid>
