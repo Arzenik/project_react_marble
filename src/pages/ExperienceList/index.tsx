@@ -4,53 +4,58 @@ import ExperienceCard from '../../components/ExperienceCard';
 import { experienceApi, Experience, PaginatedResponse } from '../../api/experienceApi';
 
 const ExperienceList = () => {
-    const [experiences, setExperiences] = useState<Experience[]>([]);
+    const [allExperiences, setAllExperiences] = useState<Experience[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const ITEMS_PER_PAGE = 9;
 
+    // Charger toutes les expériences une seule fois
     useEffect(() => {
-        const controller = new AbortController();
-
-        const fetchExperiences = async () => {
+        const fetchAllExperiences = async () => {
             try {
-                const data = await experienceApi.getAllExperiences(page, ITEMS_PER_PAGE);
-                setExperiences(data.results);
-                setTotalPages(data.totalPages);
+                // Récupérer toutes les expériences sans pagination
+                const data = await experienceApi.getAllExperiences(1, 1000); // Nombre suffisamment grand pour tout récupérer
+                setAllExperiences(data.results);
+                setTotalItems(data.total);
                 setLoading(false);
             } catch (err) {
-                if (err instanceof Error && err.name === 'AbortError') {
-                    return;
-                }
                 setError('Une erreur est survenue lors du chargement des expériences.');
                 setLoading(false);
             }
         };
 
-        fetchExperiences();
-
-        return () => {
-            controller.abort();
-        };
-    }, [page]);
+        fetchAllExperiences();
+    }, []);
 
     const categories = useMemo(() => {
-        const uniqueCategories = new Set(experiences.map(exp => exp.category));
+        const uniqueCategories = new Set(allExperiences.map(exp => exp.category));
         return Array.from(uniqueCategories);
-    }, [experiences]);
+    }, [allExperiences]);
 
+    // Filtrer toutes les expériences selon les critères
     const filteredExperiences = useMemo(() => {
-        return experiences.filter(experience => {
+        return allExperiences.filter(experience => {
             const matchesSearch = experience.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 experience.description.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = !selectedCategory || experience.category === selectedCategory;
             return matchesSearch && matchesCategory;
         });
-    }, [experiences, searchTerm, selectedCategory]);
+    }, [allExperiences, searchTerm, selectedCategory]);
+
+    // Calculer le nombre total de pages après filtrage
+    const totalPages = useMemo(() => {
+        return Math.ceil(filteredExperiences.length / ITEMS_PER_PAGE);
+    }, [filteredExperiences, ITEMS_PER_PAGE]);
+
+    // Paginer les résultats filtrés
+    const paginatedExperiences = useMemo(() => {
+        const startIndex = (page - 1) * ITEMS_PER_PAGE;
+        return filteredExperiences.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredExperiences, page, ITEMS_PER_PAGE]);
 
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -118,7 +123,7 @@ const ExperienceList = () => {
             </Box>
 
             <Grid container spacing={4}>
-                {filteredExperiences.map((experience) => (
+                {paginatedExperiences.map((experience) => (
                     <Grid item key={experience.id} xs={12} sm={6} md={4}>
                         <ExperienceCard experience={experience} />
                     </Grid>
