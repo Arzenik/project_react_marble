@@ -140,8 +140,7 @@ const ExperienceDetail = () => {
                         />
                         
                         <Button
-                            component={Link}
-                            to={`/booking/${experience.id}`}
+                            onClick={handleOpenBookingModal}
                             variant="contained"
                             size="large"
                             fullWidth
